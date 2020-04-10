@@ -24,5 +24,6 @@ urlpatterns = [
 	url(r'^save_chatting_message_web/$', save_chatting_message_web, name='save_chatting_message_web'),
 	url(r'^send_chatting_notification/$', send_chatting_notification, name='send_chatting_notification'),
 	url(r'^get_chatting_message_web/$', get_chatting_message_web, name='get_chatting_message_web'),
+	url(r'^update_tooken_web/$', update_tooken_web, name='update_tooken_web'),
 
 ]

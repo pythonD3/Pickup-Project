@@ -77,4 +77,48 @@ class Accept_Pickup_Detail(models.Model):
 		verbose_name_plural = "Accept_Pickup_Detail"
 		
 		
+
+class ChatMaster(models.Model):
+	fk_pick_sched =  models.ForeignKey(Pickup_Schedule_Detail,on_delete=models.CASCADE,null=True,blank=True)
+	user1_id = models.CharField(max_length = 10,null=True,blank=True)
+	user2_id = models.CharField(max_length = 10,null=True,blank=True)
 	
+	class Meta:
+		verbose_name="ChatMaster"
+		verbose_name_plural = "ChatMaster"
+
+class ChatChild(models.Model):
+	fk_chat_master = models.ForeignKey(ChatMaster,null = True, db_column='fk_chat_master',on_delete=models.CASCADE)
+	message = models.TextField(null = True , blank = True)
+	date = models.DateField(null = True , blank = True)
+	time = models.TimeField(null = True , blank = True)
+	user_id = models.CharField(max_length = 10,null=True,blank=True)
+
+	class Meta:
+		verbose_name="ChatChild"
+		verbose_name_plural = "ChatChild"
+	
+	
+################################### Not in use
+	
+	
+class Chatting_Master(models.Model):	
+	fk_user = models.ForeignKey(User_Detail,on_delete=models.CASCADE,null=True,blank=True)
+	fk_accept = models.ForeignKey(Accept_Pickup_Detail,on_delete=models.CASCADE,null=True,blank=True)
+	fk_pick_sched =  models.ForeignKey(Pickup_Schedule_Detail,on_delete=models.CASCADE,null=True,blank=True)
+
+	class Meta:
+		verbose_name = "Chatting_Master"
+		verbose_name_plural = "Chatting_Master"
+		
+class Chatting_Child(models.Model):
+	fk_chat_master = models.ForeignKey(Chatting_Master,on_delete=models.CASCADE,null=True,blank=True)
+	message = models.TextField(null=True,blank=True)
+	date =  models.DateField(null = True, blank = True)
+	time = models.TimeField(null =True, blank = True)
+	message_from = models.CharField(max_length=100,null=True,blank=True)
+	user_id = models.CharField(max_length = 10 , null=True , blank=True)
+	
+	class Meta:
+		verbose_name = "Chatting_Child"
+		verbose_name_plural="Chatting_Child"

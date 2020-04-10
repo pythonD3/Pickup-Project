@@ -194,7 +194,17 @@ def user_list_web(request):
 				if i.phone_no:
 					dict['phone_no'] = str(i.phone_no)
 				else:
-					dict['phone_no'] = ""
+					dict['phone_no'] = ""	
+					
+				if i.profile_image:
+					dict['profile_image'] = str(i.profile_image)
+				else:
+					dict['profile_image'] = ""	
+					
+				if i.email_id:
+					dict['email_id'] = str(i.email_id)
+				else:
+					dict['email_id'] = ""
 				
 				child_count = Child_Detail.objects.filter(fk_user_id=i.id)
 				count = child_count.count()
@@ -245,14 +255,15 @@ def update_user_profile_web(request):
 				print("chld", i)
 				if len(i)>0:
 					print("le",len(i))
-					child_obj=Child_Detail.objects.get(id=user_id)
+					child_obj=Child_Detail.objects.filter(fk_user_id=user_id)
 					child_obj.name =i['name']
 					child_obj.age = i['age']
 					child_obj.grade = i['grade']
-					child_obj.save()
+					child_obj.update()
 				else:
 					pass
-				send_data = {'msg':"User Profile Updated",'status':"1"}
+					
+			send_data = {'msg':"User Profile Updated",'status':"1"}
 		else:
 			
 			send_data = {'msg':"User Not Found",'status':"0"}
@@ -697,10 +708,25 @@ def get_schedule_web(request):
 			print("acc_object",count)
 			dict_1 = {}
 			for j in acc_object:
+			
 				if j.fk_pick_sched:
 					dict_1['schedule_username'] = str(j.fk_pick_sched.fk_user.name)
 				else:
 					dict_1['schedule_username'] = ""
+					
+					
+				if j.fk_pick_sched.fk_user.id:
+					dict_1['schedule_user_id'] = str(j.fk_pick_sched.fk_user.id)
+				else:
+					dict_1['schedule_user_id'] = ""
+					
+					
+					
+				if j.fk_pick_sched.fk_user.profile_image:
+					dict_1['profile_image'] = str(j.fk_pick_sched.fk_user.profile_image)
+				else:
+					dict_1['profile_image'] = ""
+				
 					
 				if j.fk_pick_sched.id:
 					dict_1['schedule_id'] = str(j.fk_pick_sched.id)
@@ -721,6 +747,10 @@ def get_schedule_web(request):
 				else:
 					dict_1['time'] = ""
 					
+				if j.id:
+					dict_1['accepted_id'] = str(j.id)
+				else:
+					dict_1['accept_id'] = ""
 				if j.fk_pick_sched.fk_child:
 					dict_1['child_name'] = str(j.fk_pick_sched.fk_child.name)
 				else:
@@ -976,11 +1006,22 @@ def accept_schedule_list_web(request):
 				print("objecttttttttt",obj)
 				for i in obj:
 				
-				
+					
+					if i.fk_user.profile_image:
+						dict['profile_image'] = str(i.fk_user.profile_image)
+					else:
+						dict['profile_image'] = ""	
+						
 					if i.fk_user.name:
 						dict['username'] = str(i.fk_user.name)
 					else:
 						dict['username'] = ""	
+						
+					if i.fk_user.id:
+						dict['user_id'] = str(i.fk_user.id)
+					else:
+						dict['user_id'] = ""	
+						
 						
 					if i.fk_user.phone_no:
 						dict['phone_no'] = str(i.fk_user.phone_no)
@@ -991,7 +1032,12 @@ def accept_schedule_list_web(request):
 						dict['data'] = str(i.fk_pick_sched.request)
 					else:
 						dict['data'] = ""	
-					
+						
+					if i.fk_pick_sched.id:
+						dict['schedule_id'] = str(i.fk_pick_sched.id)
+					else:
+						dict['schedule_id'] = ""	
+						
 					if i.fk_pick_sched.schedule_type:
 						dict['schedule_type'] = str(i.fk_pick_sched.schedule_type)
 					else:
@@ -1154,6 +1200,11 @@ def group_member_list_web(request):
 					dict['group_name'] = str(j.group_name)
 				else:
 					dict['group_name'] = ""
+				
+				if j.fk_user.profile_image:
+					dict['profile_image'] = str(j.fk_user.profile_image)
+				else:
+					dict['profile_image'] = ""
 							
 			
 				if j.group_member_list:
@@ -1179,6 +1230,11 @@ def group_member_list_web(request):
 								dict_1['user_id'] =str(m.id)
 							else:
 								dict_1['user_id'] =""
+							if m.profile_image:
+								dict_1['member_profile_image'] =str(m.profile_image)
+							else:
+								dict_1['member_profile_image'] =""
+								
 							member_list.append(dict_1)
 							dict_1={}
 							
@@ -1202,117 +1258,275 @@ def group_member_list_web(request):
 	return JsonResponse(send_data)
 	
 	
-	
-	
-	
-	
-	
 	############################## Save Chatting 
 	
+	
+
 @csrf_exempt
-def save_chatting_message_web(request):
+def 	save_chatting_message_web(request):
 	try:
 		data = json.loads(request.body.decode('utf-8'))
-		user_id = data['user_id']
-		accept_user_id = data['accept_user_id']
 		schedule_id = data['schedule_id']
-		message_from = data['message_from']
+		user1_id = data['user1_id']
+		user2_id = data['user2_id']
 		message = data['message']
-		current_date = data['current_date']
-		current_time = data['current_time']
-		data_message = {}
+		message_from = data['message_from']
+		date = data['date']
+		time = data['time']
 		
-		if Accept_Pickup_Detail.objects.filter(id = accept_user_id).exists():
-			accept_obj = Accept_Pickup_Detail.objects.get(id = accept_user_id)
-			sched_obj = Pickup_Schedule_Detail.objects.get(id=schedule_id)
-			user_obj = User_Detail.objects.get(id = user_id)
-			data_message['accept_id'] = accept_user_id
-			data_message['user_id'] = user_id
-			data_message['title'] = "New Message"
-			data_message['body'] = message
-			data_message['notification_type'] = "chat"
-			
-			
-			# if sched_obj.request:
-				# data_message['request'] = sched_obj = request
-			# else:
-				# data_message['request']  = ""
-			if user_obj.name:
-				data_message['user_name'] = user_obj.name
-			else:
-				data_message['user_name'] = ""
-			if user_obj.phone_no:
-				data_message['phone_no'] = user_obj.phone_no
-			else:
-				data_message['phone_no'] = ""
-		
-			if accept_obj.fk_user.name:
-				data_message['accepted_user_name'] = accept_obj.fk_user.name
-			else:
-				data_message['accepted_user_name'] = ""
-			if accept_obj.fk_user.phone_no:
-				data_message['accepted_user_phone_no'] = accept_obj.fk_user.phone_no
-			else:
-				data_message['accepted_user_phone_no'] = ""
-			
-			
-			print("data_message-----",data_message)
-			if Chatting_Master.objects.filter(fk_user__id = user_id,fk_accept__id =accept_user_id).exists():
-				chat_master_obj = Chatting_Master.objects.get(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched=schedule_id)
-				if message_from=="User":	
-					chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = accept_user_id)
-					chat_child_obj.save()
-					
-					if accept_obj.fk_user.token:
-						res = send_chatting_notification(accept_obj.fk_user.token ,"New Message", message, data_message)
-						print(res)
-					else:
-						pass
-						
-				elif message_from == "Accepted_User":
-					chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = user_id)
-					chat_child_obj.save()
-					
-					if user_obj.token:
-						res = send_chatting_notification(user_obj.token, "New Message", message, data_message)
-						print(res)
-					else:
-						pass
-				else:
-					pass
-			else:
-				chat_master_obj = Chatting_Master(fk_pick_sched= Pickup_Schedule_Detail.objects.get(id=schedule_id), fk_user = User_Detail.objects.get(id=user_id),fk_accept=Accept_Pickup_Detail.objects.get(id =accept_user_id))
-				chat_master_obj.save()
-				
-				if message_from == "User":
-					chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = accept_user_id)
-					chat_child_obj.save()
-					
-					if accept_obj.fk_user.token:
-						res = send_chatting_notification(accept_obj.fk_user.token, "New Message", message, data_message)
-						print(res)
-					else:
-						pass
-						
-				elif message_from == "Accepted_User":
-					chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = user_id)
-					chat_child_obj.save()
-					
-					if user_obj.token:
-						res = send_chatting_notification(user_obj.token ,"New Message", message, data_message)
-						print(res)
-					else:
-						pass
-				else:
-					pass
-			
-			send_data = {'msg':"Message Saved Successfully",'status':"1"}
+		user1_obj = User_Detail.objects.get(id = user1_id)
+		if user1_obj.name:
+			name1 = user1_obj.name
 		else:
-			send_data = {'msg':"Accepted Schedule Not Found",'status':"0"}
+			name1 = ""
+		if user1_obj.profile_image:
+			profile_image1 = str(user1_obj.profile_image)
+		else:
+			profile_image1 = ""
+			
+		user2_obj = User_Detail.objects.get(id = user2_id)
+		if user2_obj.name:
+			name2 = user2_obj.name
+		else:
+			name2 = ""
+		if user2_obj.profile_image:
+			profile_image2 = str(user2_obj.profile_image)
+		else:
+			profile_image2 = ""
+	
+		#### 24 hour format #######
+		# t = datetime.strptime(time, '%H:%M')
+		# time = t.strftime("%H:%M:%S")
+		# print(time)
+		
+		if ChatMaster.objects.filter(fk_pick_sched_id = schedule_id,user1_id = user1_id , user2_id = user2_id).exists():
+			chat_obj = ChatMaster.objects.get(fk_pick_sched_id = schedule_id,user1_id = user1_id , user2_id = user2_id)
+			
+			ChatChild.objects.create(fk_chat_master_id = chat_obj.id,message = message , date = date , time = time,user_id = message_from)
+			
+		elif ChatMaster.objects.filter(fk_pick_sched_id = schedule_id,user1_id = user2_id , user2_id = user1_id).exists():
+			chat_obj =  ChatMaster.objects.get(fk_pick_sched_id = schedule_id,user1_id = user2_id , user2_id = user1_id)
+			ChatChild.objects.create(fk_chat_master_id = chat_obj.id ,message=message,date=date,time=time,user_id=message_from)
+			
+		else:
+			chat_obj = ChatMaster.objects.create(fk_pick_sched_id = schedule_id,user1_id = user1_id , user2_id = user2_id)
+			ChatChild.objects.create(fk_chat_master_id = chat_obj.id,message = message , date = date , time = time,user_id = message_from)
+		
+		message_to = user1_id if message_from == user2_id else user2_id
+		android_user_token = User_Detail.objects.get(id = message_to).token
+		name = User_Detail.objects.get(id = message_from).name
+		
+		message_title = "PickupApp"
+		message_body = name+" sent you message"
+		data_message = {
+		'title':"PickupApp",
+		'body':name+" sent you message",
+		'status':"chat",
+		'order_id' : schedule_id, 
+		'user1_id' : user1_id,
+		'user2_id' : user2_id,
+		'user1_name' : name1,
+		'user2_name' : name2,
+		'user1_profile' : profile_image1,
+		'user2_profile' : profile_image2
+		}
+		
+		# if android_user_token:
+			# push_service_android.notify_single_device(registration_id=android_user_token, message_title=message_title, message_body=message_body,sound="Default", data_message = data_message)
+		# print("android notification")
+		print("android_user_token",android_user_token)
+		if android_user_token:
+			res = send_chatting_notification(android_user_token ,"New Message", message, data_message)
+			print(res)
+		else:
+			pass
+		
+		send_data = {"status":"1","msg":"message sent successfully"}
 	except:
 		send_data = {'msg':"Something went wrong",'error':str(traceback.format_exc())}
 		print(send_data)
 	return JsonResponse(send_data)
+	
+	
+	
+@csrf_exempt
+def get_chatting_message_web(request):
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+		schedule_id = data['schedule_id']
+		user1_id = data['user1_id']
+		user2_id = data['user2_id']
+
+		if ChatMaster.objects.filter(fk_pick_sched_id = schedule_id , user1_id = user1_id , user2_id = user2_id).exists():
+		
+			chat_obj = ChatMaster.objects.get(fk_pick_sched_id = schedule_id , user1_id = user1_id , user2_id = user2_id)
+			chat_child_obj = ChatChild.objects.filter(fk_chat_master_id = chat_obj.id).order_by('-date','-time','-id')
+			chat_list = []
+			chat_dict = {}
+			for i in chat_child_obj:
+				chat_dict['message'] = i.message
+				chat_dict['date'] = i.date
+
+				t = datetime.strptime(str(i.time), "%H:%M:%S")
+				time = t.strftime("%I:%M:%S %p")
+				chat_dict['time'] = time
+
+				user_name = User_Detail.objects.get(id = i.user_id).name
+				chat_dict['user_name'] = user_name
+				chat_dict['user_id'] = i.user_id
+				chat_list.append(chat_dict)
+				chat_dict = {}
+
+			send_data = {"status":"1","msg":"chat found","chat_data":chat_list}
+		elif ChatMaster.objects.filter(fk_pick_sched_id = schedule_id , user1_id = user2_id , user2_id = user1_id).exists():
+				chat_obj = ChatMaster.objects.get(fk_pick_sched_id = schedule_id , user1_id = user2_id , user2_id = user1_id)
+				chat_child_obj = ChatChild.objects.filter(fk_chat_master_id = chat_obj.id).order_by('-date','-time','-id')
+				chat_list = []
+				chat_dict = {}
+				for i in chat_child_obj:
+					chat_dict['message'] = i.message
+					chat_dict['date'] = i.date
+
+					t = datetime.strptime(str(i.time), "%H:%M:%S")
+					time = t.strftime("%I:%M:%S %p")
+					chat_dict['time'] = time
+
+					user_name = User_Detail.objects.get(id = i.user_id).name
+					chat_dict['user_name'] = user_name
+					chat_dict['user_id'] = i.user_id
+					chat_list.append(chat_dict)
+					chat_dict = {}
+
+				send_data = {"status":"1","msg":"chat found","chat_data":chat_list}
+		else:
+			send_data = {"status":"0","msg":"no chat found"}
+
+	except:
+		send_data = {'msg':"Something went wrong",'error':str(traceback.format_exc())}
+		print(send_data)
+	return JsonResponse(send_data)
+	
+		################################# Update Token
+		
+@csrf_exempt
+def update_tooken_web(request):
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+		user_id= data['user_id']
+		token= data['token']
+		if User_Detail.objects.filter(id=user_id).exists():
+			obj = User_Detail.objects.get(id=user_id)
+			obj.token = token
+			obj.save()
+			send_data ={'msg':"Token Updated Successfully",'status':"1"}
+		else:
+			send_data ={'msg':"User Not Found",'status':"0"}
+	except:
+		send_data = {'msg':"Something went wrong",'error':str(traceback.format_exc())}
+		print(send_data)
+	return JsonResponse(send_data)
+
+	
+# @csrf_exempt
+# def save_chatting_message_web(request):
+	# try:
+		# data = json.loads(request.body.decode('utf-8'))
+		# user_id = data['user_id']
+		# accept_user_id = data['accept_user_id']
+		# schedule_id = data['schedule_id']
+		# message_from = data['message_from']
+		# message = data['message']
+		# current_date = data['current_date']
+		# current_time = data['current_time']
+		# data_message = {}
+		# print('message_from',message_from)
+		# if Accept_Pickup_Detail.objects.filter(id = accept_user_id).exists():
+			# accept_obj = Accept_Pickup_Detail.objects.get(id = accept_user_id)
+			# sched_obj = Pickup_Schedule_Detail.objects.get(id=schedule_id)
+			# user_obj = User_Detail.objects.get(id = user_id)
+			# data_message['accept_id'] = accept_user_id
+			# data_message['user_id'] = user_id
+			# data_message['title'] = "New Message"
+			# data_message['body'] = message
+			# data_message['notification_type'] = "chat"
+			
+			
+			# if user_obj.name:
+				# data_message['user_name'] = user_obj.name
+			# else:
+				# data_message['user_name'] = ""
+			# if user_obj.phone_no:
+				# data_message['phone_no'] = user_obj.phone_no
+			# else:
+				# data_message['phone_no'] = ""
+		
+			# if accept_obj.fk_user.name:
+				# data_message['accepted_user_name'] = accept_obj.fk_user.name
+			# else:
+				# data_message['accepted_user_name'] = ""
+			# if accept_obj.fk_user.phone_no:
+				# data_message['accepted_user_phone_no'] = accept_obj.fk_user.phone_no
+			# else:
+				# data_message['accepted_user_phone_no'] = ""
+			
+			
+			# print("data_message-----",data_message)
+			# if Chatting_Master.objects.filter(fk_user__id = user_id,fk_accept__id =accept_user_id).exists():
+				# chat_master_obj = Chatting_Master.objects.get(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched__id=schedule_id)
+				# if message_from=="User":	
+					# chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = accept_user_id)
+					# chat_child_obj.save()
+					
+					# if accept_obj.fk_user.token:
+						# res = send_chatting_notification(accept_obj.fk_user.token ,"New Message", message, data_message)
+						# print(res)
+					# else:
+						# pass
+						
+				# elif message_from == "Accepted_User":
+					# chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = user_id)
+					# chat_child_obj.save()
+					
+					# if user_obj.token:
+						# res = send_chatting_notification(user_obj.token, "New Message", message, data_message)
+						# print(res)
+					# else:
+						# pass
+				# else:
+					# pass
+			# else:
+				# chat_master_obj = Chatting_Master(fk_pick_sched= Pickup_Schedule_Detail.objects.get(id=schedule_id), fk_user = User_Detail.objects.get(id=user_id),fk_accept=Accept_Pickup_Detail.objects.get(id =accept_user_id))
+				# chat_master_obj.save()
+				
+				# if message_from == "User":
+					# chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = accept_user_id)
+					# chat_child_obj.save()
+					
+					# if accept_obj.fk_user.token:
+						# res = send_chatting_notification(accept_obj.fk_user.token, "New Message", message, data_message)
+						# print(res)
+					# else:
+						# pass
+						
+				# elif message_from == "Accepted_User":
+					# chat_child_obj = Chatting_Child(fk_chat_master = chat_master_obj,message=message,date=current_date,time=current_time, message_from = message_from, user_id = user_id)
+					# chat_child_obj.save()
+					
+					# if user_obj.token:
+						# res = send_chatting_notification(user_obj.token ,"New Message", message, data_message)
+						# print(res)
+					# else:
+						# pass
+				# else:
+					# pass
+			
+			# send_data = {'msg':"Message Saved Successfully",'status':"1"}
+		# else:
+			# send_data = {'msg':"Accepted Schedule Not Found",'status':"0"}
+	# except:
+		# send_data = {'msg':"Something went wrong",'error':str(traceback.format_exc())}
+		# print(send_data)
+	# return JsonResponse(send_data)
 		
 
 ######################### Function for sending notifiction to customer code
@@ -1326,8 +1540,6 @@ def send_chatting_notification(token,title,body,data_message):
 		push_service = FCMNotification(api_key=api_key)
 		message_title = title
 		message_body = body
-		# message_icon = "mashwar_logo"
-		# sound = "Default"
 		color = "#FF22C19D"
 		data_message = data_message
 		print("device_token------>",device_token)
@@ -1335,7 +1547,6 @@ def send_chatting_notification(token,title,body,data_message):
 		send_data = "success"
 	except Exception as e:
 		print(str(traceback.format_exc()))
-		# send_data = {'status':"0", 'msg':"Something Went Wrong", 'error':str(traceback.format_exc())}
 		send_data = "error"
 	return send_data
 	
@@ -1343,35 +1554,34 @@ def send_chatting_notification(token,title,body,data_message):
 #################################################Getting list of message 
 
 
-@csrf_exempt
-def get_chatting_message_web(request):
-	try:
-		data = json.loads(request.body.decode('utf-8'))
-		user_id = data['user_id']
-		accept_user_id = data['accept_user_id']
-		schedule_id = data['schedule_id']
-		List = []
-		Dict = {}
+# @csrf_exempt
+# def get_chatting_message_web(request):
+	# try:
+		# data = json.loads(request.body.decode('utf-8'))
+		# user_id = data['user_id']
+		# accept_user_id = data['accept_user_id']
+		# schedule_id = data['schedule_id']
+		# list = []
+		# Dict = {}
 		
-		if Chatting_Master.objects.filter(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched=schedule_id).exists():
-			obj = Chatting_Master.objects.get(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched=schedule_id)
+		# if Chatting_Master.objects.filter(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched=schedule_id).exists():
+			# obj = Chatting_Master.objects.get(fk_user__id = user_id,fk_accept__id =accept_user_id,fk_pick_sched=schedule_id)
 			
-			message_obj = Chatting_Child.objects.filter(fk_chat_master__id = obj.id).order_by('date', 'time')
-			for i in message_obj:
-				Dict['message'] = i.message
-				Dict['message_from'] = i.message_from
-				Dict['date'] = i.date
-				Dict['time'] = i.time.strftime('%H:%M')
-				List.append(Dict)
-				Dict = {}
+			# message_obj = Chatting_Child.objects.filter(fk_chat_master__id = obj.id).order_by('date', 'time')
+			# for i in message_obj:
+				# Dict['message'] = i.message
+				# Dict['message_from'] = i.message_from
+				# Dict['date'] = i.date
+				# Dict['time'] = i.time.strftime('%H:%M')
+				# list.append(Dict)
+				# Dict = {}
 				
-			send_data = {'status':"1", 'msg':"Chatting Messages", 'chat':List}
-			
-		else:
-			send_data = {'status':"1", 'msg':"Chatting Messages", 'chat':List}
+			# send_data = {'status':"1", 'msg':"Chatting Messages", 'chat':list}
+		# else:
+			# send_data = {'status':"0", 'msg':"No Chat Details Found"}
 		
-	except Exception as e:
-		print(str(traceback.format_exc()))
-		send_data = {'status':"0", 'msg':"Something Went Wrong", 'error':str(traceback.format_exc())}
+	# except Exception as e:
+		# print(str(traceback.format_exc()))
+		# send_data = {'status':"0", 'msg':"Something Went Wrong", 'error':str(traceback.format_exc())}
 		
-	return JsonResponse(send_data)
+	# return JsonResponse(send_data)
